@@ -698,7 +698,8 @@ SMODS.Joker{
     atlas = "spicy_jokers",
     calculate = function(self, card, context)
         if context.cardarea == G.jokers then
-            if card.ability.extra.hands_left == 0 then 
+            if card.ability.extra.hands_left == 0 and not card.getting_removed then
+                card.getting_removed = true
                 G.E_MANAGER:add_event(Event({
                     func = function()
                         play_sound('tarot1')
@@ -708,9 +709,17 @@ SMODS.Joker{
                         card.children.center.pinch.x = true
                         G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.3, blockable = false,
                             func = function()
-                                    G.jokers:remove_card(self)
-                                    card:remove()
-                                    card = nil
+                                    if G.jokers then
+                                        local success, _ = pcall(function()
+                                            if G.jokers:has_card(card) then
+                                                G.jokers:remove_card(card)
+                                                card:remove()
+                                            end
+                                        end)
+                                        if not success and card and card.remove then
+                                            card:remove()
+                                        end
+                                    end
                                 return true; end})) 
                         return true
                     end
